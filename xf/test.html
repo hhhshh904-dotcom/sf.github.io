@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测测你在星战中属于什么等级</title>
+    <style>
+        /* 暗黑极客风格 CSS */
+        body {
+            background-color: #121212;
+            color: #00ffcc;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px #00ffcc55;
+        }
+        h1 { font-size: 24px; color: #fff; }
+        .btn {
+            background-color: #00ffcc;
+            color: #121212;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+        .btn:hover { background-color: #00ccaa; box-shadow: 0 0 10px #00ffcc; }
+        .option-btn {
+            display: block;
+            width: 100%;
+            background-color: #2a2a2a;
+            color: #fff;
+            border: 1px solid #00ffcc;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: left;
+            border-radius: 5px;
+        }
+        .option-btn:hover { background-color: #00ffcc; color: #121212; }
+        /* 隐藏元素的类 */
+        .hidden { display: none; }
+        #result-img { max-width: 100%; border-radius: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="start-page">
+        <h1>在错综复杂的sex fight 中，你属于哪一种类型？</h1>
+        <p>率先高潮的一方将会失败</p>
+        <button class="btn" onclick="startTest()">开始测试</button>
+    </div>
+
+    <div id="question-page" class="hidden">
+        <h2 id="question-text">问题加载中...</h2>
+        <div id="options-container"></div>
+    </div>
+
+    <div id="result-page" class="hidden">
+        <h2>你的网络身份是：</h2>
+        <h1 id="result-title" style="color: #00ffcc;">加载中...</h1>
+        <p id="result-desc"></p>
+        <img id="result-image" src="" alt="" style="max-width: 100%; border-radius: 10px; margin-top: 20px; display: none;">
+        <button class="btn" onclick="location.reload()">再测一次</button>
+    </div>
+</div>
+
+<script>
+    // --- 核心数据配置区 ---
+    
+    // 1. 题库（为了演示，我们先放1道题）
+    const questions = [
+        {
+            question: "你认为以下四个人谁魅力最大",
+            options: [
+                { text: "A. 高松灯", type: "mzr" },
+                { text: "B. 贝尔.格里尔斯", type: "man" },
+                { text: "C. 李佳伟", type: "math" },
+                { text: "D. 薇尔莉特", type: "2cy" }
+            ]
+        },
+
+        {
+            question: "在战斗开始前，你会对对手说什么",
+            options: [
+                { text: "A.你的爱液我收下了 ", type: "mm" },
+                { text: "B.你将成为我的猎物 ", type: "math" },
+                { text: "C.我很强 ", type: "man" },
+                { text: "D.什么也不说，保持冷静 ", type: "lg" }
+            ]
+        },
+        {
+            question: "如果你处于下方，收到了骑乘攻击，你会怎么做",
+            options: [
+                { text: "A.慌忙挣扎 ", type: "ctrl" },
+                { text: "B.冷静应对，先忍耐一手 ", type: "dm" },
+                { text: "C.尝试奋起，全力反击 ", type: "lg" },
+                { text: "D.求饶 ", type: "" }
+            ]
+        },
+        {
+            question: "如果你处于上方，对下方的小鬼准备终结一击时，她突然摆出可怜的表情，并向你求饶，表示会给你很好的回报，你会怎么做",
+            options: [
+                { text: "A.放过她 ", type: "dm" },
+                { text: "B.不为所动，继续攻击 ", type: "ctrl" },
+                { text: "C.假装放过阴她一手，一会突然袭击 ", type: "boy" },
+                { text: "D.用更加可爱的声音反过来对她撒娇 ", type: "ll" }
+            ]
+        },
+        {
+            question: "对方是经验成熟的老司机，在战斗中，你已经即将高潮，但对方却突然停下来，你会怎么做",
+            options: [
+                { text: "A.求求你让我高潮吧 ", type: "girl" },
+                { text: "B.请你尊重我 ", type: "man" },
+                { text: "C.抓住机会，试图反杀 ", type: "dm" },
+                { text: "D.拿出一本抽象代数开始学习，趁这个机会不如做两道题 ", type: "math" }
+            ]
+        },
+        {
+            question: "在和对方口交时，对面的大叔突然说了一句“软软的真舒服”，你会怎么反应",
+            options: [
+                { text: "A.他一定是在强装镇定，我要继续口他 ", type: "ctrl" },
+                { text: "B.可恶的大叔，居然小瞧我，看我换个姿势榨干你 ", type: "mm" },
+                { text: "C.啊，我的攻击居然这么弱，完蛋了 ", type: "ll" },
+                { text: "D.叔叔你好骚 ", type: "boy" }
+            ]
+        },
+        {
+            question: "你对以下哪种攻击方式最敏感",
+            options: [
+                { text: "乳胶 ", type: "mm" },
+                { text: "口交 ", type: "boy" },
+                { text: "足交 ", type: "2cy" },
+                { text: "肛交 ", type: "mzr" },
+                { text: "69 ", type: "ll" },
+                { text: "小学 ", type: "lg" },
+                { text: "实变函数 ", type: "math" },
+                { text: "中出", type: "ll" }
+            ]
+        },
+        {
+            question: "当你坚持不下去的时候，是什么支撑着你",
+            options: [
+                { text: "薇尔莉特 ", type: "2cy" },
+                { text: "不断地快感 ", type: "dm" },
+                { text: "李佳伟的课堂 ", type: "math" },
+                { text: "坚定的意志 ", type: "man" },
+                { text: "我放弃坚持 ", type: "girl" },
+                { text: "我要进入小学 ", type: "girl" },
+                { text: "你给我坐下老弟 ", type: "mzr" },
+                { text: "我的梦想 ", type: "lg" }
+            ]
+        }
+    ];
+
+    // 2. 结果数据（包含你设计的人格名字、描述）
+    const resultsData = {
+        "2cy": {
+            title: "二次元幻想家",
+            desc: "你拥有对二次元极度的热爱，也许有一天你喜欢的角色会来榨干你",
+            image: "./imgs/2cy.jpg"
+        },
+        "math": {
+            title: "数学爱好者",
+            desc: "纯粹的数学爱好者，喜欢钻研各种知识，可能会成为千古留名的人物。但是在sex的方面，你彻底失败了",
+            image: "./imgs/math.jpg"
+        },
+        "mzr": {
+            title: "魔怔人",
+            desc: "你拥有独特的思维方式，常常让人捉摸不透",
+            image: "./imgs/mzr.jpg"
+        },
+        "lg": {
+            title: "撸管人",
+            desc: "相比于和妹妹们交流，你更喜欢和自己的小弟弟交流，可能会成为一个孤独的人",
+            image: "./imgs/lg.jpg"
+        },
+        "girl": {
+            title: "伪娘",
+            desc: "你原本是男性，但是由于对女性的热爱，已经变成了女性",
+            image: "./imgs/girl.jpg"
+        },
+        "boy": {
+            title: "伪男",
+            desc: "你原本是女生，但由于不明的原因变成了男生",
+            image: "./imgs/boy.jpg"
+        },
+        "dm": {
+            title: "抖M",
+            desc: "你享受被控制和支配的感觉，可能会在关系中扮演被动的角色",
+            image: "./imgs/dm.jpg"
+        },
+        "ctrl": {
+            title: "掌控者",
+            desc: "你喜欢掌控和主导的感觉，你的身形较为高大，一旦占据上风，将会全程保持压制",
+            image: "./imgs/ctrl.jpg"
+        },
+        "mm": {
+            title: "魅魔",
+            desc: "你拥有超出常人的魅力，能够轻易吸引他人，但也要因此小心，你会轻易的被魔怔人盯上",
+            image: "./imgs/mm.jpg"
+        },
+        "ll": {
+            title: "萝莉",
+            desc: "你在成都只能算个萝莉",
+            image: "./imgs/ll.jpg"
+        },
+        "man": {
+            title: "真男人",
+            desc: "你拥有强大的实力和坚定的意志，能够在任何情况下保持冷静和自信，可能会成为一个真正的男人",
+            image: "./imgs/man.jpg"
+        }
+    };
+
+    let currentQuestionIndex = 0;
+    let scores = {};
+
+    // 自动将 resultsData 里所有的键（如 '2cy', 'math' 等）加入计分板，初始分设为 0
+    for (let key in resultsData) {
+        scores[key] = 0;
+    }
+
+    function startTest() {
+        document.getElementById('start-page').classList.add('hidden');
+        document.getElementById('question-page').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = questions[currentQuestionIndex];
+        document.getElementById('question-text').innerText = q.question;
+        
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = ''; // 清空上一次的选项
+        
+        // 生成选项按钮
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => selectOption(opt.type);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function selectOption(type) {
+        // 只有当 type 存在，且在计分板里时才加分
+        if (type && scores[type] !== undefined) {
+            scores[type] += 1;
+            }
+    
+        // 进入下一题或结算
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            renderQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('question-page').classList.add('hidden');
+        document.getElementById('result-page').classList.remove('hidden');
+
+        let finalType = null;
+        let maxScore = -1;
+
+        // 遍历得分板，找出分数最高的人格键名
+        for (let type in scores) {
+            // 确保这个类型在结果数据里是存在的
+            if (scores[type] > maxScore && resultsData[type]) {
+                maxScore = scores[type];
+                finalType = type;
+            }
+        }
+
+        // 容错机制：如果用户全选了没有 type 的空选项导致所有得分全为 0，默认展示列表里的第一个人格
+        if (!finalType) {
+            finalType = Object.keys(resultsData)[0];
+        }
+    
+        // 渲染结果
+        document.getElementById('result-title').innerText = resultsData[finalType].title;
+        document.getElementById('result-desc').innerText = resultsData[finalType].desc;
+
+        // 👇 新增这两行：渲染图片并显示
+        const imgElement = document.getElementById('result-image');
+        imgElement.src = resultsData[finalType].image; 
+        imgElement.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
