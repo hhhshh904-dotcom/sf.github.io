@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>测测你在星战中属于什么等级</title>
+    <title>测测你在网络上属于什么水平</title>
     <style>
         /* 暗黑极客风格 CSS */
         body {
@@ -50,9 +50,7 @@
             border-radius: 5px;
         }
         .option-btn:hover { background-color: #00ffcc; color: #121212; }
-        /* 隐藏元素的类 */
         .hidden { display: none; }
-        #result-img { max-width: 100%; border-radius: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -70,10 +68,10 @@
     </div>
 
     <div id="result-page" class="hidden">
-        <h2>你的网络身份是：</h2>
+        <h2>你的最终鉴定结果是：</h2>
         <h1 id="result-title" style="color: #00ffcc;">加载中...</h1>
         <p id="result-desc"></p>
-        <img id="result-image" src="" alt="" style="max-width: 100%; border-radius: 10px; margin-top: 20px; display: none;">
+        <img id="result-image" src="" alt="结果图" style="max-width: 100%; border-radius: 10px; margin-top: 20px; display: none;">
         <button class="btn" onclick="location.reload()">再测一次</button>
     </div>
 </div>
@@ -97,7 +95,7 @@
             question: "在战斗开始前，你会对对手说什么",
             options: [
                 { text: "A.你的爱液我收下了 ", type: "mm" },
-                { text: "B.你将成为我的猎物 ", type: "math" },
+                { text: "B.你将成为我的猎物 ", type: "ll" },
                 { text: "C.我很强 ", type: "man" },
                 { text: "D.什么也不说，保持冷静 ", type: "lg" }
             ]
@@ -166,6 +164,7 @@
         }
     ];
 
+
     // 2. 结果数据（包含你设计的人格名字、描述）
     const resultsData = {
         "2cy": {
@@ -225,10 +224,14 @@
         }
     };
 
+
+    // ==========================================
+    // 👇 以下是核心逻辑区（包含完美平局随机算法），千万不要动！
+    // ==========================================
     let currentQuestionIndex = 0;
     let scores = {};
 
-    // 自动将 resultsData 里所有的键（如 '2cy', 'math' 等）加入计分板，初始分设为 0
+    // 动态初始化计分板
     for (let key in resultsData) {
         scores[key] = 0;
     }
@@ -244,9 +247,8 @@
         document.getElementById('question-text').innerText = q.question;
         
         const optionsContainer = document.getElementById('options-container');
-        optionsContainer.innerHTML = ''; // 清空上一次的选项
+        optionsContainer.innerHTML = ''; 
         
-        // 生成选项按钮
         q.options.forEach(opt => {
             const btn = document.createElement('button');
             btn.className = 'option-btn';
@@ -257,12 +259,11 @@
     }
 
     function selectOption(type) {
-        // 只有当 type 存在，且在计分板里时才加分
+        // 安全加分机制
         if (type && scores[type] !== undefined) {
             scores[type] += 1;
-            }
-    
-        // 进入下一题或结算
+        }
+        
         currentQuestionIndex++;
         if (currentQuestionIndex < questions.length) {
             renderQuestion();
@@ -275,31 +276,39 @@
         document.getElementById('question-page').classList.add('hidden');
         document.getElementById('result-page').classList.remove('hidden');
 
-        let finalType = null;
         let maxScore = -1;
+        let tiedTypes = []; 
 
-        // 遍历得分板，找出分数最高的人格键名
+        // 遍历得分板寻找最高分及平局情况
         for (let type in scores) {
-            // 确保这个类型在结果数据里是存在的
             if (scores[type] > maxScore && resultsData[type]) {
                 maxScore = scores[type];
-                finalType = type;
+                tiedTypes = [type]; 
+            } else if (scores[type] === maxScore && resultsData[type]) {
+                tiedTypes.push(type); 
             }
         }
 
-        // 容错机制：如果用户全选了没有 type 的空选项导致所有得分全为 0，默认展示列表里的第一个人格
-        if (!finalType) {
+        // 结算并处理平局随机
+        let finalType;
+        if (maxScore > 0 && tiedTypes.length > 0) {
+            const randomIndex = Math.floor(Math.random() * tiedTypes.length);
+            finalType = tiedTypes[randomIndex];
+        } else {
+            // 容错：一分未得则默认展示第一个
             finalType = Object.keys(resultsData)[0];
         }
-    
-        // 渲染结果
+        
+        // 渲染文案
         document.getElementById('result-title').innerText = resultsData[finalType].title;
         document.getElementById('result-desc').innerText = resultsData[finalType].desc;
 
-        // 👇 新增这两行：渲染图片并显示
+        // 渲染图片
         const imgElement = document.getElementById('result-image');
-        imgElement.src = resultsData[finalType].image; 
-        imgElement.style.display = 'block';
+        if (resultsData[finalType].image) {
+            imgElement.src = resultsData[finalType].image; 
+            imgElement.style.display = 'block';
+        }
     }
 </script>
 
